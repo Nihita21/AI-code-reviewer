@@ -1,4 +1,4 @@
-function LanguageSelector() {
+function LanguageSelector({ language, setLanguage }) {
   return (
     <div style={{ marginBottom: "20px" }}>
       <label
@@ -12,6 +12,8 @@ function LanguageSelector() {
       </label>
 
       <select
+        value={language}
+        onChange={(e) => setLanguage(e.target.value)}
         style={{
           width: "220px",
           padding: "10px",
@@ -19,10 +21,10 @@ function LanguageSelector() {
           fontSize: "16px",
         }}
       >
-        <option>Python</option>
-        <option>JavaScript</option>
-        <option>Java</option>
-        <option>C++</option>
+        <option value="python">Python</option>
+        <option value="javascript">JavaScript</option>
+        <option value="java">Java</option>
+        <option value="cpp">C++</option>
       </select>
     </div>
   );

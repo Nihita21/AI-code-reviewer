@@ -1,38 +1,57 @@
-// Sakura x Plum Theme
+// Sakura Blossom Theme 🌸
+// Pink-first palette with subtle plum accents
 
 export const COLORS = {
+  // ==========================
   // Backgrounds
-  background: "#FDF7F9",      // Main background
-  surface: "#FADCE9",         // Cards
-  surfaceLight: "#FCEDEE",    // Secondary cards
-  border: "#EFC4CE",          // Borders
+  // ==========================
+  background: "#FDF7F9",
+  surface: "#FCEDEE",
+  surfaceSecondary: "#FADCE9",
+  border: "#ae1b3d",
 
+  // ==========================
   // Primary Pink
-  primary: "#EA517F",         // Main buttons
-  primaryHover: "#D1254F",    // Button hover
-  secondary: "#EF82A0",       // Secondary buttons
-  tertiary: "#F6BEC8",        // Inputs, chips
+  // ==========================
+  primary: "#EA517F",
+  primaryHover: "#D1254F",
+  secondary: "#EF82A0",
+  softPink: "#F6BEC8",
 
-  // Accent Purple (use sparingly)
-  accent: "#A6569D",          // Active elements
-  accentLight: "#B889C5",     // Hover states
-  accentDark: "#813C85",      // Icons, emphasis
+  // ==========================
+  // Purple Accents
+  // (Use Sparingly)
+  // ==========================
+  accent: "#A6569D",
+  accentHover: "#813C85",
+  accentLight: "#C9A3D2",
 
-  // Text
-  textPrimary: "#602641",     // Main text
-  textSecondary: "#7D5284",   // Secondary text
-  textMuted: "#B95A89",       // Muted text
-  textWhite: "#FFFFFF",
+  // ==========================
+  // Typography
+  // ==========================
+  textPrimary: "#4A2235",
+  textSecondary: "#bc3781",
+  textTertiary: "#eb599b",
+  textLight: "#9A7485",
+  textWhite: "#ffffff",
 
-  // Status
+  // ==========================
+  // Status Colors
+  // ==========================
   success: "#D76994",
   warning: "#C35C6A",
   error: "#B04552",
 
-  // Code Editor
+  // ==========================
+  // Editor
+  // ==========================
   editorBackground: "#1E1E1E",
-  editorBorder: "#EFC4CE",
+  editorBorder: "#F6BEC8",
 
+  // ==========================
   // Shadows
-  shadow: "rgba(234, 81, 127, 0.15)",
+  // ==========================
+  shadowLight: "rgba(234, 81, 127, 0.08)",
+  shadowMedium: "rgba(234, 81, 127, 0.15)",
+  shadowDark: "rgba(166, 86, 157, 0.18)",
 };

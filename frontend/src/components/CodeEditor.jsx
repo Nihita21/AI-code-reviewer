@@ -1,11 +1,12 @@
 import Editor from "@monaco-editor/react";
 
-function CodeEditor() {
+function CodeEditor({ language, code, setCode }) {
   return (
     <Editor
       height="500px"
-      defaultLanguage="python"
-      defaultValue="# Write your code here..."
+      language={language}
+      value={code}
+      onChange={(value) => setCode(value || "")}
       theme="vs-dark"
     />
   );
