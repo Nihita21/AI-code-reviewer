@@ -1,4 +1,6 @@
 import Navbar from "../components/Navbar";
+import LanguageSelector from "../components/LanguageSelector";
+import CodeEditor from "../components/CodeEditor";
 
 function Home() {
   return (
@@ -12,8 +14,9 @@ function Home() {
           padding: "20px",
         }}
       >
-        <h2>Welcome to AI Code Reviewer 🚀</h2>
-        <p>Let's start building!</p>
+        <LanguageSelector />
+
+        <CodeEditor />
       </div>
     </>
   );
