@@ -1,8 +1,9 @@
 import { COLORS } from "../styles/colors";
 
-function ReviewButton() {
+function ReviewButton({ onClick }) {
   return (
     <button
+      onClick={onClick}
       style={{
         backgroundColor: COLORS.primary,
         color: COLORS.textWhite,
@@ -16,7 +17,7 @@ function ReviewButton() {
         transition: "0.3s",
       }}
     >
-      🌸 Review Code
+      Review Code
     </button>
   );
 }
