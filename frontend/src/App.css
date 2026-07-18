@@ -1,0 +1,15 @@
+.page {
+  width: min(1200px, 92%);
+  margin: 40px auto;
+}
+
+.section {
+  margin-top: 30px;
+}
+
+.card {
+  background: white;
+  border: 1px solid #e9def9;
+  border-radius: 20px;
+  box-shadow: 0 10px 35px rgba(167, 139, 250, 0.08);
+}

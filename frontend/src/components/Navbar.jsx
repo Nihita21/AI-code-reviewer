@@ -1,17 +1,33 @@
+import "./Navbar.css";
+
 function Navbar() {
   return (
-    <nav
-      style={{
-        backgroundColor: "#1e1e1e",
-        color: "white",
-        padding: "20px",
-        textAlign: "center",
-        fontSize: "28px",
-        fontWeight: "bold",
-        borderBottom: "1px solid #333",
-      }}
-    >
-      🤖 AI Code Reviewer
+    <nav className="navbar">
+
+      <div className="logo">
+
+        <div className="logoIcon">
+          {"</>"}
+        </div>
+
+        <div>
+
+          <div className="logoTitle">
+            AI Code Reviewer
+          </div>
+
+          <div className="logoSubtitle">
+            Analyze • Improve • Learn
+          </div>
+
+        </div>
+
+      </div>
+
+      <div className="version">
+        v0.1
+      </div>
+
     </nav>
   );
 }
