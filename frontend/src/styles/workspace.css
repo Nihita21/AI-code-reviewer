@@ -1,0 +1,50 @@
+.workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  background: white;
+  padding: 18px 24px;
+
+  border-radius: 18px;
+  border: 1px solid #e9def9;
+
+  box-shadow: 0 10px 35px rgba(167,139,250,.08);
+}
+
+.editorCard {
+  background: white;
+
+  border-radius: 20px;
+
+  border: 1px solid #e9def9;
+
+  overflow: hidden;
+
+  box-shadow: 0 10px 35px rgba(167,139,250,.08);
+}
+
+.editorHeader {
+  padding: 16px 22px;
+
+  border-bottom: 1px solid #ece4fb;
+
+  font-weight: 600;
+
+  color: #3d3552;
+}
+
+.editorContent {
+  padding: 20px;
+}
+
+.buttonRow {
+  display: flex;
+  justify-content: flex-end;
+}

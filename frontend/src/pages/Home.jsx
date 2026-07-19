@@ -1,6 +1,6 @@
 import { useState } from "react";
 import api from "../services/api";
-
+import "../styles/Workspace.css";
 import Navbar from "../components/Navbar";
 import LanguageSelector from "../components/LanguageSelector";
 import CodeEditor from "../components/CodeEditor";
@@ -32,28 +32,40 @@ function Home() {
       <Navbar />
 
       <div className="page">
-        <div className="section">
-          <LanguageSelector
-            language={language}
-            setLanguage={setLanguage}
-          />
-        </div>
 
-        <div className="section">
-          <CodeEditor
-            language={language}
-            code={code}
-            setCode={setCode}
-          />
-        </div>
+        <div className="workspace">
 
-        <div className="section">
-          <ReviewButton onClick={handleReview} />
-        </div>
+          <div className="toolbar">
+            <LanguageSelector
+              language={language}
+              setLanguage={setLanguage}
+            />
+          </div>
 
-        <div className="section">
+          <div className="editorCard">
+
+            <div className="editorHeader">
+              Source Code
+            </div>
+
+            <div className="editorContent">
+              <CodeEditor
+                language={language}
+                code={code}
+                setCode={setCode}
+              />
+            </div>
+
+          </div>
+
+          <div className="buttonRow">
+            <ReviewButton onClick={handleReview} />
+          </div>
+
           <ReviewCard review={review} />
+
         </div>
+
       </div>
     </>
   );
