@@ -1,79 +1,127 @@
+from collections import Counter
 
 from fastapi import APIRouter, HTTPException
 
+from app import config
 from app.schemas.review import (
+    Capabilities,
+    Issue,
+    LanguageInfo,
+    Metrics,
     ReviewRequest,
     ReviewResponse,
-    Issue,
 )
-from app.services.analyzer import analyze_python
-from app.services.ruff_analyzer import analyze_with_ruff
+from app.services.ai_reviewer import ai_configured, review_with_ai
+from app.services.errors import AnalyzerUnavailable
+from app.services.pipeline import compute_score, merge_findings, run_static_analysis
 
 router = APIRouter()
+
+# id, label, has static analysis. Every language can be reviewed by the AI.
+LANGUAGES = [
+    ("python", "Python", True),
+    ("javascript", "JavaScript", False),
+    ("java", "Java", False),
+    ("cpp", "C++", False),
+]
+LANGUAGE_IDS = {language_id for language_id, _, _ in LANGUAGES}
+ALIASES = {"py": "python", "js": "javascript", "c++": "cpp"}
+
+
+def build_summary(issues: list[Issue]) -> str:
+    if not issues:
+        return "No issues detected by the current analyzers."
+    counts = Counter(issue.severity for issue in issues)
+    parts = [f"{counts[level]} {level}" for level in ("high", "medium", "low") if counts[level]]
+    return f"Found {len(issues)} issue(s): {', '.join(parts)}."
+
+
+def to_issue(finding: dict) -> Issue:
+    # `kind` is internal bookkeeping for de-duplication and is not part of the API.
+    return Issue(**{key: value for key, value in finding.items() if key != "kind"})
+
+
+@router.get("/capabilities", response_model=Capabilities)
+def capabilities():
+    """Tell the frontend what this backend can do, so the UI never offers dead options."""
+    ai_enabled = ai_configured()
+    return Capabilities(
+        ai_enabled=ai_enabled,
+        ai_model=config.openai_model() if ai_enabled else None,
+        languages=[
+            LanguageInfo(
+                id=language_id,
+                label=label,
+                static_analysis=static,
+                ai_review=ai_enabled,
+            )
+            for language_id, label, static in LANGUAGES
+        ],
+    )
 
 
 @router.post("/review", response_model=ReviewResponse)
 def review(request: ReviewRequest):
-    if not request.code.strip():
+    code = request.code
+
+    if not code.strip():
+        raise HTTPException(status_code=400, detail="Code cannot be empty.")
+
+    limit = config.max_code_chars()
+    if len(code) > limit:
         raise HTTPException(
-            status_code=400,
-            detail="Code cannot be empty.",
+            status_code=413,
+            detail=f"Code is too large (limit: {limit:,} characters).",
         )
 
-    if request.language.lower() not in {"python", "py"}:
+    requested = request.language.strip().lower()
+    language = ALIASES.get(requested, requested)
+
+    if language not in LANGUAGE_IDS:
         raise HTTPException(
             status_code=400,
-            detail="Currently, only Python code review is supported.",
+            detail=f"Unsupported language: {request.language}.",
         )
 
-    ast_findings = analyze_python(request.code)
+    use_ai = request.use_ai and ai_configured()
 
-    # Syntax errors prevent meaningful Ruff analysis.
-    if any(
-        finding["title"].startswith("Syntax error:")
-        for finding in ast_findings
-    ):
-        findings = ast_findings
-    else:
-        ruff_findings = analyze_with_ruff(request.code)
+    if language != "python" and not use_ai:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Only Python has built-in static analysis. Enable AI review "
+                f"(and configure OPENAI_API_KEY) to review {language} code."
+            ),
+        )
 
-        # Merge duplicate findings using their line and title.
-        findings = list(ast_findings)
+    findings: list[dict] = []
+    warnings: list[str] = []
+    metrics = None
+    ai_summary = None
 
-        existing = {
-            (item["line"], item["title"].split(":")[-1].strip().lower())
-            for item in findings
-        }
+    if language == "python":
+        findings, warnings, metrics = run_static_analysis(code)
 
-        for finding in ruff_findings:
-            key = (
-                finding["line"],
-                finding["title"].split(":")[-1].strip().lower(),
-            )
+    if use_ai:
+        try:
+            ai_result = review_with_ai(code, language, findings)
+        except AnalyzerUnavailable as error:
+            if language != "python":
+                # Nothing else to show for these languages, so surface the failure.
+                raise HTTPException(status_code=502, detail=str(error)) from error
+            warnings.append(str(error))
+        else:
+            ai_summary = ai_result["summary"] or None
+            findings = merge_findings(findings, ai_result["issues"])
+            findings.sort(key=lambda finding: finding["line"])
 
-            if key not in existing:
-                findings.append(finding)
-                existing.add(key)
-
-    issues = [Issue(**finding) for finding in findings]
-
-    deductions = {"low": 5, "medium": 15, "high": 30}
-    score = max(
-        0,
-        100 - sum(
-            deductions.get(issue.severity, 0)
-            for issue in issues
-        ),
-    )
-
-    summary = (
-        "No issues detected by the current analyzers."
-        if not issues
-        else f"Found {len(issues)} issue(s) in the submitted Python code."
-    )
+    issues = [to_issue(finding) for finding in findings]
 
     return ReviewResponse(
-        score=score,
-        summary=summary,
+        score=compute_score(findings),
+        summary=build_summary(issues),
         issues=issues,
+        metrics=Metrics(**metrics) if metrics else None,
+        ai_summary=ai_summary,
+        warnings=warnings,
     )

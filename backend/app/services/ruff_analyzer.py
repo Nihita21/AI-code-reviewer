@@ -1,7 +1,31 @@
+"""Style and correctness checks powered by Ruff."""
 
 import json
 import subprocess
 import sys
+
+from app.services.errors import AnalyzerUnavailable
+
+# E4/E7/E9: import, statement and syntax errors   F: pyflakes   B: bugbear
+# (security rules are left to Bandit to avoid reporting the same thing twice)
+RULES = "E4,E7,E9,F,B"
+
+# Ruff rule -> the shared "kind" used to de-duplicate against other analyzers.
+KIND_BY_CODE = {
+    "F401": "unused-import",
+    "B006": "mutable-default",
+}
+
+HIGH_CODES = {"F821", "F822", "F823"}  # undefined names are real bugs
+LOW_CODES = {"F401", "F841", "E401", "E402", "E731", "E741", "B007", "B904"}
+
+
+def severity_for(code_id: str) -> str:
+    if code_id in HIGH_CODES or code_id.startswith("E9"):
+        return "high"
+    if code_id in LOW_CODES:
+        return "low"
+    return "medium"
 
 
 def analyze_with_ruff(code: str) -> list[dict]:
@@ -12,10 +36,14 @@ def analyze_with_ruff(code: str) -> list[dict]:
                 "-m",
                 "ruff",
                 "check",
-                "--stdin-filename",
-                "submitted_code.py",
+                "--isolated",  # ignore any ruff config in the working directory
+                "--no-cache",  # do not litter the working directory with .ruff_cache
+                "--select",
+                RULES,
                 "--output-format",
                 "json",
+                "--stdin-filename",
+                "submitted_code.py",
                 "-",
             ],
             input=code,
@@ -24,52 +52,32 @@ def analyze_with_ruff(code: str) -> list[dict]:
             timeout=10,
             check=False,
         )
-    except subprocess.TimeoutExpired:
-        return [
-            {
-                "severity": "medium",
-                "title": "Ruff analysis timed out",
-                "line": 1,
-                "suggestion": "Try reviewing a smaller code submission.",
-            }
-        ]
+    except subprocess.TimeoutExpired as error:
+        raise AnalyzerUnavailable(
+            "Ruff timed out; style checks were skipped. Try a smaller submission."
+        ) from error
 
+    if "No module named" in (result.stderr or ""):
+        raise AnalyzerUnavailable("Ruff is not installed; style checks were skipped.")
+
+    # Ruff exits 0 (clean) or 1 (violations found); anything else is a failure.
     if result.returncode not in (0, 1):
-        return [
-            {
-                "severity": "medium",
-                "title": "Ruff analysis failed",
-                "line": 1,
-                "suggestion": "Check the Ruff installation and backend logs.",
-            }
-        ]
+        raise AnalyzerUnavailable("Ruff failed to run; style checks were skipped.")
 
     try:
         findings = json.loads(result.stdout)
-    except json.JSONDecodeError:
-        return [
-            {
-                "severity": "medium",
-                "title": "Invalid Ruff output",
-                "line": 1,
-                "suggestion": "Check the Ruff version and backend logs.",
-            }
-        ]
+    except json.JSONDecodeError as error:
+        raise AnalyzerUnavailable(
+            "Ruff returned unreadable output; style checks were skipped."
+        ) from error
 
     issues = []
 
     for finding in findings:
         code_id = finding.get("code") or ""
         message = finding.get("message", "Code issue detected")
-        line = finding.get("location", {}).get("row", 1)
+        line = (finding.get("location") or {}).get("row", 1)
         fix = finding.get("fix")
-
-        if code_id.startswith("E") or code_id.startswith("F"):
-            severity = "medium"
-        elif code_id.startswith("S"):
-            severity = "high"
-        else:
-            severity = "low"
 
         suggestion = (
             fix.get("message")
@@ -79,10 +87,12 @@ def analyze_with_ruff(code: str) -> list[dict]:
 
         issues.append(
             {
-                "severity": severity,
-                "title": f"{code_id}: {message}",
-                "line": line,
+                "severity": severity_for(code_id),
+                "title": f"{code_id}: {message}" if code_id else message,
+                "line": max(1, line),
                 "suggestion": suggestion,
+                "source": "ruff",
+                "kind": KIND_BY_CODE.get(code_id, code_id or None),
             }
         )
 

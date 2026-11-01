@@ -1,14 +1,33 @@
+"""Lightweight AST-based checks that need no external tools."""
 
 import ast
 
 
-def make_issue(severity, title, line, suggestion):
+def make_issue(severity, title, line, suggestion, kind):
     return {
         "severity": severity,
         "title": title,
         "line": max(1, line),
         "suggestion": suggestion,
+        "source": "ast",
+        # Stable identifier used to drop duplicates reported by other analyzers.
+        "kind": kind,
     }
+
+
+def _exported_names(tree: ast.AST) -> set[str]:
+    """Names listed in ``__all__`` count as used (re-exports)."""
+    names = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        if not any(isinstance(t, ast.Name) and t.id == "__all__" for t in node.targets):
+            continue
+        if isinstance(node.value, (ast.List, ast.Tuple)):
+            for element in node.value.elts:
+                if isinstance(element, ast.Constant) and isinstance(element.value, str):
+                    names.add(element.value)
+    return names
 
 
 def analyze_python(code: str) -> list[dict]:
@@ -23,6 +42,17 @@ def analyze_python(code: str) -> list[dict]:
                 f"Syntax error: {error.msg}",
                 error.lineno or 1,
                 "Correct the syntax at this line before running the code.",
+                "syntax-error",
+            )
+        ]
+    except (ValueError, RecursionError) as error:
+        return [
+            make_issue(
+                "high",
+                f"Syntax error: {error}",
+                1,
+                "The code could not be parsed. Check for invalid characters or extreme nesting.",
+                "syntax-error",
             )
         ]
 
@@ -35,6 +65,9 @@ def analyze_python(code: str) -> list[dict]:
                 imported_names[name] = node.lineno
 
         elif isinstance(node, ast.ImportFrom):
+            # `from __future__ import ...` is a compiler directive, never "unused".
+            if node.module == "__future__":
+                continue
             for alias in node.names:
                 if alias.name != "*":
                     name = alias.asname or alias.name
@@ -43,9 +76,9 @@ def analyze_python(code: str) -> list[dict]:
     used_names = {
         node.id
         for node in ast.walk(tree)
-        if isinstance(node, ast.Name)
-        and isinstance(node.ctx, ast.Load)
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load)
     }
+    used_names |= _exported_names(tree)
 
     for name, line in imported_names.items():
         if name not in used_names and not name.startswith("_"):
@@ -55,6 +88,7 @@ def analyze_python(code: str) -> list[dict]:
                     f"Unused import: {name}",
                     line,
                     f"Remove the import of '{name}' if it is not needed.",
+                    "unused-import",
                 )
             )
 
@@ -62,20 +96,18 @@ def analyze_python(code: str) -> list[dict]:
 
     for node in ast.walk(tree):
         if isinstance(node, function_types):
-            positional_defaults = zip(
-                node.args.args[-len(node.args.defaults):]
-                if node.args.defaults
-                else [],
-                node.args.defaults,
+            # Positional defaults apply to the *last* positional parameters,
+            # including positional-only ones.
+            positional = node.args.posonlyargs + node.args.args
+            defaults = list(
+                zip(
+                    positional[len(positional) - len(node.args.defaults):],
+                    node.args.defaults,
+                )
             )
-
-            defaults = list(positional_defaults)
             defaults.extend(
                 (arg, default)
-                for arg, default in zip(
-                    node.args.kwonlyargs,
-                    node.args.kw_defaults,
-                )
+                for arg, default in zip(node.args.kwonlyargs, node.args.kw_defaults)
                 if default is not None
             )
 
@@ -88,14 +120,12 @@ def analyze_python(code: str) -> list[dict]:
                             default.lineno,
                             "Use None as the default and create a new "
                             "mutable object inside the function.",
+                            "mutable-default",
                         )
                     )
 
         elif isinstance(node, ast.ExceptHandler):
-            if (
-                len(node.body) == 1
-                and isinstance(node.body[0], ast.Pass)
-            ):
+            if len(node.body) == 1 and isinstance(node.body[0], ast.Pass):
                 issues.append(
                     make_issue(
                         "medium",
@@ -103,6 +133,7 @@ def analyze_python(code: str) -> list[dict]:
                         node.lineno,
                         "Handle the exception, log it, or re-raise it "
                         "instead of silently ignoring it.",
+                        "empty-except",
                     )
                 )
 
