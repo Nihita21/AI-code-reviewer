@@ -1,15 +1,19 @@
 # Python
-backend/venv/
+venv/
+venv_old/
+.venv/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.pytest_cache/
+.ruff_cache/
 
-# Environment Variables
+# Environment variables (keep the *.example templates)
 .env
 
 # Node
-frontend/node_modules/
+node_modules/
 
 # Vite
 frontend/dist/
