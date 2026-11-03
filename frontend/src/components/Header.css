@@ -1,0 +1,122 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 18px 0 18px;
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 1px 14px rgba(10, 8, 30, 0.9);
+}
+
+/* A block text cursor, the way an editor draws it. */
+.wordmark__cursor {
+  width: 12px;
+  height: 26px;
+  background: var(--marker);
+  animation: caret 1.1s steps(1) infinite;
+}
+
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+.header__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  padding: 8px 16px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 4px 4px 0 var(--marker);
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control__label {
+  font-weight: 700;
+}
+
+.control__select {
+  min-width: 150px;
+  padding: 7px 10px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--sheet);
+  font-weight: 500;
+}
+
+.control--check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ink);
+}
+
+.control--off {
+  color: var(--ink);
+  opacity: 0.6;
+}
+
+.run {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px 8px 18px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 3px 3px 0 var(--marker);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.run:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--marker);
+}
+
+.run:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--marker);
+}
+
+.run:disabled {
+  background: var(--lilac);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.run__key {
+  padding: 1px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: var(--radius);
+  font-family: var(--font-code);
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@media (max-width: 900px) {
+  .header {
+    padding: 16px 0 14px;
+  }
+}

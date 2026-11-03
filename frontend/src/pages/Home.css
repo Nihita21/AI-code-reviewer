@@ -1,0 +1,28 @@
+.app {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  padding: 0 28px 28px;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(380px, 1fr);
+  min-height: 0;
+  gap: 28px;
+}
+
+@media (max-width: 900px) {
+  .app {
+    height: auto;
+    overflow: visible;
+    padding: 0 14px 32px;
+  }
+
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+}

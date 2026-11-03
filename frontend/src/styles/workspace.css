@@ -48,3 +48,34 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.aiToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-weight: 600;
+  color: #3d3552;
+
+  cursor: pointer;
+}
+
+.aiToggle.disabled {
+  color: #aaa1c3;
+  cursor: not-allowed;
+}
+
+.hint {
+  color: #7c7394;
+  font-size: 14px;
+}
+
+.errorBanner {
+  padding: 14px 18px;
+
+  border-radius: 12px;
+  border: 1px solid #f5b5b5;
+  background: #fdeaea;
+
+  color: #a03030;
+}

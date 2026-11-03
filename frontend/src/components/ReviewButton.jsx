@@ -1,23 +1,28 @@
 import { COLORS } from "../styles/colors";
 
-function ReviewButton({ onClick }) {
+function ReviewButton({ onClick, loading = false, disabled = false }) {
+  const inactive = loading || disabled;
+
   return (
     <button
+      type="button"
       onClick={onClick}
+      disabled={inactive}
       style={{
-        backgroundColor: COLORS.primary,
-        color: COLORS.textWhite,
+        backgroundColor: inactive ? COLORS.secondary : COLORS.primary,
+        color: "#FFFFFF",
         border: "none",
         padding: "14px 28px",
         borderRadius: "12px",
         fontSize: "16px",
         fontWeight: "600",
-        cursor: "pointer",
+        cursor: inactive ? "not-allowed" : "pointer",
+        opacity: inactive ? 0.7 : 1,
         marginTop: "20px",
         transition: "0.3s",
       }}
     >
-      Review Code
+      {loading ? "Reviewing…" : "Review Code"}
     </button>
   );
 }

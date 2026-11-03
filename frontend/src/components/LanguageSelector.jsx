@@ -1,7 +1,8 @@
-function LanguageSelector({ language, setLanguage }) {
+function LanguageSelector({ languages, language, setLanguage, aiAvailable }) {
   return (
-    <div style={{ marginBottom: "20px" }}>
+    <div>
       <label
+        htmlFor="language"
         style={{
           display: "block",
           marginBottom: "8px",
@@ -12,6 +13,7 @@ function LanguageSelector({ language, setLanguage }) {
       </label>
 
       <select
+        id="language"
         value={language}
         onChange={(e) => setLanguage(e.target.value)}
         style={{
@@ -21,10 +23,17 @@ function LanguageSelector({ language, setLanguage }) {
           fontSize: "16px",
         }}
       >
-        <option value="python">Python</option>
-        <option value="javascript">JavaScript</option>
-        <option value="java">Java</option>
-        <option value="cpp">C++</option>
+        {languages.map((item) => (
+          <option
+            key={item.id}
+            value={item.id}
+            // Only Python has static analysis; other languages need the AI.
+            disabled={!item.static_analysis && !aiAvailable}
+          >
+            {item.label}
+            {item.static_analysis ? "" : " (AI only)"}
+          </option>
+        ))}
       </select>
     </div>
   );
